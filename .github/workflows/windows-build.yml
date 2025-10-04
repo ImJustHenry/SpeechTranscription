@@ -15,17 +15,20 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Checkout repo and submodules
+      # Checkout repo with submodules
       - uses: actions/checkout@v4
         with:
-          submodules: recursive  # <-- important for CTkXYFrame
+          submodules: recursive
+          fetch-depth: 0
 
-      # Setup Python
+      # Ensure all submodules are initialized and updated
+      - name: Update Git submodules
+        run: git submodule update --init --recursive
+
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.11.7
+          python-version: 3.11
 
-      # Install Java (for your other dependencies)
       - name: Install Java
         shell: powershell
         run: |
@@ -36,32 +39,44 @@ jobs:
             Write-Host "Java is already installed."
           }
 
-      # Install NLTK
+      - name: Install Specific Python Version
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.7
+
       - name: Install NLTK
         run: |
           pip install nltk
           python -m nltk.downloader punkt
 
-      # Cache Python packages
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Install Python dependencies
+      - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
+      - run: pip uninstall -y typing
+
+      # Build the EXE
       - run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
-          pip install --upgrade transformers
-          pip uninstall -y typing
+          pyinstaller --name Saltify --windowed --noconfirm \
+          --copy-metadata torch \
+          --copy-metadata tqdm \
+          --copy-metadata regex \
+          --copy-metadata sacremoses \
+          --copy-metadata requests \
+          --copy-metadata packaging \
+          --copy-metadata filelock \
+          --copy-metadata numpy \
+          --copy-metadata tokenizers \
+          --copy-metadata importlib_metadata \
+          --collect-data sv_ttk \
+          --recursive-copy-metadata "openai-whisper" \
+          --collect-data whisper \
+          --paths CTkXYFrame \
+          GUI.py
 
-      # Build EXE with PyInstaller
-      - name: Build EXE
-        run: |
-          pyinstaller --name Saltify --windowed --noconfirm --onefile -c --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --collect-data whisper --paths CTkXYFrame GUI.py
-
-      # Copy assets
       - shell: cmd
         run: |
           robocopy build_assets dist/Saltify /e /v
@@ -76,14 +91,12 @@ jobs:
           set HEADLESS=true
           python GUI.py > app.log 2>&1 || true
 
-      # Upload logs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: SpeechTranscription_logs
           path: app.log
 
-      # Upload EXE
       - uses: actions/upload-artifact@v4
         if: always()
         with:

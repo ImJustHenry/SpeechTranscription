@@ -72,7 +72,7 @@ jobs:
 
       # Debug: Verify imports
       - name: Debug - Test imports
-        run: python -c "import pattern, customtkinter, CTkXYFrame; print('✅ All imports successful!')"
+        run: python -c "import pattern, customtkinter, CTkXYFrame; print('All imports successful!')"
 
       # Build EXE with PyInstaller
       - name: Build Saltify EXE

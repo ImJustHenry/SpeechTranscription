@@ -1,3 +1,5 @@
+name: Build Saltify (Windows)
+
 on:
   push:
     branches:
@@ -7,6 +9,11 @@ on:
       - issue169_dependency
       - issue178_build-test-failures
       - issue-2-cicd-logging
+  workflow_call:  # <-- added to allow this workflow to be called by another workflow
+    inputs:
+      ref:
+        required: false
+        type: string
 
 jobs:
   build-windows:
@@ -14,6 +21,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}  # <-- optional ref when called via workflow_call
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -37,7 +47,7 @@ jobs:
         run: |
           pip install nltk
           python -m nltk.downloader punkt
-      
+
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
@@ -52,17 +62,15 @@ jobs:
         run: |
           robocopy build_assets dist/Saltify /e /v 
           mkdir dist\Saltify\_internal\lightning_fabric
-          robocopy dist/Saltify/_internal/lightning dist/Saltify/_internal/lightning_fabric /e /v
+          robocopy dist\Saltify/_internal/lightning dist\Saltify/_internal\lightning_fabric /e /v
           mkdir dist\Saltify\_internal\pattern\text\en\
           move dist\Saltify\en-model.slp dist\Saltify\_internal\pattern\text\en\
-      
 
-       # Added app.log to see crash logs in github action - CICD Internal Dev
       - name: Run app for logging
         run: |
           set HEADLESS=true
           python GUI.py > app.log 2>&1 || true
-          
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:

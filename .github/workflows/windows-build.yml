@@ -43,7 +43,7 @@ jobs:
       # Debug: check Python can import CTkXYFrame
       - name: Debug: Test Python import
         run: |
-          python -c "import sys; print('PYTHONPATH:', sys.path); import CTkXYFrame; print('CTkXYFrame imported successfully')"
+          python -c 'import sys; print("PYTHONPATH:", sys.path); import CTkXYFrame; print("CTkXYFrame imported successfully")'
 
       # Setup Python
       - uses: actions/setup-python@v4

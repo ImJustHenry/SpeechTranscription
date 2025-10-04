@@ -84,6 +84,7 @@ jobs:
             --collect-submodules CTkXYFrame ^
             --add-data "CTkXYFrame;CTkXYFrame" ^
             --add-data "images;images" ^
+            --add-data "jre_portable;jre_portable" ^
             --collect-data pattern ^
             --copy-metadata torch ^
             --copy-metadata tqdm ^

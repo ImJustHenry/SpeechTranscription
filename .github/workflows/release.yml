@@ -11,12 +11,12 @@ permissions:
 
 jobs:
   call-macos-build:
-    uses: oss-slu/SpeechTranscription/.github/workflows/macos-build.yml@build_fixes_copy
+    uses: ./.github/workflows/macos-build.yml
     with:
       ref: ${{ github.ref }}
 
   call-windows-build:
-    uses: oss-slu/SpeechTranscription/.github/workflows/windows-build.yml@build_fixes_copy
+    uses: ./.github/workflows/windows-build.yml
     with:
       ref: ${{ github.ref }}
 

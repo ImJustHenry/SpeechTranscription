@@ -41,15 +41,25 @@ jobs:
         with:
           python-version: 3.11
 
-      # Install Java (required for language_tool_python)
-      - name: Install Java
+      # Download and extract portable JRE
+      - name: Download portable JRE
         shell: powershell
         run: |
-          if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
-            choco install jdk11 -y
-          } else {
-            Write-Host "Java already installed."
-          }
+          $jreUrl = "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u372-b07/OpenJDK8U-jre_x64_windows_hotspot_8u372b07.zip"
+          $jreZip = "$env:TEMP\jre.zip"
+          Invoke-WebRequest -Uri $jreUrl -OutFile $jreZip
+          Expand-Archive -Path $jreZip -DestinationPath "$env:USERPROFILE\jre_portable" -Force
+          Remove-Item $jreZip
+          Write-Host "JRE extracted to $env:USERPROFILE\jre_portable"
+
+      # Set JAVA_HOME and update PATH
+      - name: Configure Java environment
+        shell: powershell
+        run: |
+          $javaPath = Get-ChildItem "$env:USERPROFILE\jre_portable" | Select-Object -First 1
+          Write-Host "Using JRE: $javaPath"
+          echo "JAVA_HOME=$javaPath" >> $env:GITHUB_ENV
+          echo "$javaPath\bin" >> $env:GITHUB_PATH
 
       # Cache pip packages
       - name: Cache pip
@@ -84,7 +94,6 @@ jobs:
             --collect-submodules CTkXYFrame ^
             --add-data "CTkXYFrame;CTkXYFrame" ^
             --add-data "images;images" ^
-            --add-data "jre_portable;jre_portable" ^
             --collect-data pattern ^
             --copy-metadata torch ^
             --copy-metadata tqdm ^

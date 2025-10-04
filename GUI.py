@@ -3,17 +3,6 @@ import logging
 
 import CTkXYFrame
 
-# Detect portable JRE for language_tool_python
-if getattr(sys, 'frozen', False):
-    base_path = sys._MEIPASS  
-else:
-    base_path = os.path.dirname(os.path.abspath(__file__))
-
-java_path = os.path.join(base_path, "jre_portable") 
-if os.path.isdir(java_path):
-    os.environ["JAVA_HOME"] = java_path
-    os.environ["PATH"] = java_path + os.pathsep + os.environ.get("PATH", "")
-
 # main.py
 from customtkinter import *
 from components.user_menu import userMenu

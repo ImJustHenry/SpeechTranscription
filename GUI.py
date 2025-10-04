@@ -1,6 +1,8 @@
 # Adding Logging - CICD Internal Dev 
 import logging
 
+import CTkXYFrame
+
 # main.py
 from customtkinter import *
 from components.user_menu import userMenu

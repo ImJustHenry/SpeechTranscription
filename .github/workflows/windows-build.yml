@@ -57,12 +57,13 @@ jobs:
           pip uninstall -y typing || true
 
       - name: Verify CTkXYFrame submodule
+        shell: cmd
         run: |
           if exist CTkXYFrame (
-            echo "CTkXYFrame submodule found."
+            echo CTkXYFrame submodule found.
             dir CTkXYFrame
           ) else (
-            echo "ERROR: CTkXYFrame submodule missing!" && exit 1
+            echo ERROR: CTkXYFrame submodule missing! && exit 1
           )
 
       - name: Build EXE with PyInstaller
@@ -81,7 +82,7 @@ jobs:
           --collect-data sv_ttk ^
           --recursive-copy-metadata "openai-whisper" ^
           --collect-data whisper ^
-          --paths CTkXYFrame ^
+          --collect-all CTkXYFrame ^
           --hidden-import CTkXYFrame ^
           GUI.py
 

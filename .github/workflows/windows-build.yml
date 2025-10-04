@@ -31,6 +31,20 @@ jobs:
       - name: Add submodule to PYTHONPATH
         run: echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/CTkXYFrame" >> $GITHUB_ENV
 
+      # Debug: check submodule exists
+      - name: Debug: List repository and submodules
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Repository contents:"
+          dir
+          echo "CTkXYFrame contents:"
+          dir CTkXYFrame
+          
+      # Debug: check Python can import CTkXYFrame
+      - name: Debug: Test Python import
+        run: |
+          python -c "import sys; print('PYTHONPATH:', sys.path); import CTkXYFrame; print('CTkXYFrame imported successfully')"
+
       # Setup Python
       - uses: actions/setup-python@v4
         with:

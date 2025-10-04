@@ -1,6 +1,7 @@
 name: Build Saltify (Windows)
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -10,14 +11,13 @@ on:
       - issue178_build-test-failures
       - issue-2-cicd-logging
       - feature/githubRelease
-  workflow_dispatch:
 
 jobs:
   build-windows:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -38,36 +38,31 @@ jobs:
             Write-Host "Java is already installed."
           }
 
-      - name: Install NLTK
-        run: |
-          pip install nltk
-          python -m nltk.downloader punkt
-
-      - name: Cache Python packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-
-      # Install dependencies (CMD shell)
       - name: Install dependencies
-        shell: cmd
+        shell: bash
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
-          pip install --upgrade transformers
+          pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers transformers
           pip uninstall -y typing || true
-          :: CTkXYFrame has no setup.py, so manually copy after cloning
-          git clone https://github.com/Akascape/CTkXYFrame.git _submodules\CTkXYFrame
+          # Manually install CTkXYFrame (since repo has no setup.py)
+          git clone https://github.com/Akascape/CTkXYFrame.git
+          pip install ./CTkXYFrame
 
-      - name: Verify CTkXYFrame
+      - name: Verify CTkXYFrame installation
         run: |
-          python -c "import sys; sys.path.insert(0, '_submodules/CTkXYFrame'); import CTkXYFrame; print('CTkXYFrame loaded successfully')"
+          python -c "import CTkXYFrame; print('CTkXYFrame installed at:', CTkXYFrame.__file__)"
 
-      - name: Build EXE with PyInstaller
-        shell: cmd
+      - name: Build Saltify EXE (No-OneFile)
+        shell: bash
         run: |
-          pyinstaller --name Saltify --windowed --noconfirm --onefile ^
+          pyinstaller ^
+            --name Saltify ^
+            --windowed ^
+            --noconfirm ^
+            --collect-data sv_ttk ^
+            --collect-data whisper ^
+            --collect-all CTkXYFrame ^
+            --hidden-import CTkXYFrame ^
             --copy-metadata torch ^
             --copy-metadata tqdm ^
             --copy-metadata regex ^
@@ -78,29 +73,19 @@ jobs:
             --copy-metadata numpy ^
             --copy-metadata tokenizers ^
             --copy-metadata importlib_metadata ^
-            --collect-data sv_ttk ^
-            --recursive-copy-metadata "openai-whisper" ^
-            --collect-data whisper ^
-            --collect-all CTkXYFrame ^
-            --hidden-import CTkXYFrame ^
             GUI.py
 
-      - name: Copy assets
+      - name: Copy assets (images, ffmpeg, internal data)
         shell: cmd
         run: |
-          robocopy build_assets dist/Saltify /e /v
-          mkdir dist\Saltify\_internal\lightning_fabric
-          if exist dist\Saltify\_internal\lightning (
-            robocopy dist\Saltify\_internal\lightning dist\Saltify\_internal\lightning_fabric /e /v
-          ) else (
-            echo "_internal\lightning folder missing, skipping copy"
-          )
-          mkdir dist\Saltify\_internal\pattern\text\en\
-          if exist dist\Saltify\en-model.slp move dist\Saltify\en-model.slp dist\Saltify\_internal\pattern\text\en\
+          mkdir dist\Saltify\_internal
+          if exist build_assets robocopy build_assets dist\Saltify\build_assets /e /v
+          if exist ffmpeg.exe copy ffmpeg.exe dist\Saltify\
+          if exist images robocopy images dist\Saltify\images /e /v
 
-      - name: Upload EXE artifact
+      - name: Upload Saltify folder
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: SpeechTranscription_windows
-          path: dist/Saltify.exe
+          path: dist/Saltify

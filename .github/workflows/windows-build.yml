@@ -45,7 +45,7 @@ jobs:
       - name: Download portable JRE
         shell: powershell
         run: |
-          $jreUrl = "https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u372-b07/OpenJDK8U-jre_x64_windows_hotspot_8u372b07.zip"
+          $jreUrl = "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u462-b08/OpenJDK8U-jre_x64_windows_hotspot_8u462b08.zip"
           $jreZip = "$env:TEMP\jre.zip"
           Invoke-WebRequest -Uri $jreUrl -OutFile $jreZip
           Expand-Archive -Path $jreZip -DestinationPath "$env:USERPROFILE\jre_portable" -Force

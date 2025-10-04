@@ -1,3 +1,5 @@
+name: Build Saltify (Windows)
+
 on:
   push:
     branches:
@@ -13,16 +15,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Checkout repository with submodules
+      # Checkout repo and submodules
       - uses: actions/checkout@v4
         with:
-          submodules: recursive   # <-- ensures CTkXYFrame is pulled
-          fetch-depth: 0
+          submodules: recursive  # <-- important for CTkXYFrame
 
+      # Setup Python
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.11.7
 
+      # Install Java (for your other dependencies)
       - name: Install Java
         shell: powershell
         run: |
@@ -33,66 +36,54 @@ jobs:
             Write-Host "Java is already installed."
           }
 
-      - name: Install Specific Python Version
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11.7
-
+      # Install NLTK
       - name: Install NLTK
         run: |
           pip install nltk
           python -m nltk.downloader punkt
-      
+
+      # Cache Python packages
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
-      - run: pip uninstall -y typing
+      # Install Python dependencies
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
+          pip install --upgrade transformers
+          pip uninstall -y typing
 
-      - name: Add CTkXYFrame to PYTHONPATH
-        shell: bash
+      # Build EXE with PyInstaller
+      - name: Build EXE
         run: |
-          echo "PYTHONPATH=$PYTHONPATH:$(pwd)/CTkXYFrame" >> $GITHUB_ENV
+          pyinstaller --name Saltify --windowed --noconfirm --onefile -c --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --collect-data whisper --paths CTkXYFrame GUI.py
 
-      - run: pyinstaller --name Saltify --windowed --noconfirm --onefile -c \
-            --copy-metadata torch \
-            --copy-metadata tqdm \
-            --copy-metadata regex \
-            --copy-metadata sacremoses \
-            --copy-metadata requests \
-            --copy-metadata packaging \
-            --copy-metadata filelock \
-            --copy-metadata numpy \
-            --copy-metadata tokenizers \
-            --copy-metadata importlib_metadata \
-            --collect-data sv_ttk \
-            --recursive-copy-metadata "openai-whisper" \
-            --collect-data whisper \
-            --paths CTkXYFrame \
-            GUI.py
-
-      - shell: cmd 
+      # Copy assets
+      - shell: cmd
         run: |
-          robocopy build_assets dist/Saltify /e /v 
+          robocopy build_assets dist/Saltify /e /v
           mkdir dist\Saltify\_internal\lightning_fabric
           robocopy dist\Saltify/_internal/lightning dist\Saltify/_internal/lightning_fabric /e /v
           mkdir dist\Saltify\_internal\pattern\text\en\
           move dist\Saltify\en-model.slp dist\Saltify\_internal\pattern\text\en\
-      
+
+      # Run app for logging
       - name: Run app for logging
         run: |
           set HEADLESS=true
           python GUI.py > app.log 2>&1 || true
-          
+
+      # Upload logs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: SpeechTranscription_logs
           path: app.log
 
+      # Upload EXE
       - uses: actions/upload-artifact@v4
         if: always()
         with:

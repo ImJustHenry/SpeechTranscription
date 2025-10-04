@@ -20,87 +20,87 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Checkout repository with submodules
+      # Checkout repository and submodules
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
           submodules: recursive
           fetch-depth: 0
 
-      # Add submodule to PYTHONPATH
-      - name: Add submodule to PYTHONPATH
-        run: echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/CTkXYFrame" >> $GITHUB_ENV
-
-      # Debug: list repository contents
-      - name: "Debug: List repository and submodules"
+      # Debug: verify repo structure
+      - name: Debug - List repo and submodules
         shell: powershell
         run: |
           Write-Host "Current directory: $(pwd)"
-          Write-Host "Repository contents:"
           Get-ChildItem
-          Write-Host "CTkXYFrame contents:"
+          Write-Host "`nSubmodule (CTkXYFrame) contents:"
           Get-ChildItem CTkXYFrame
 
-      # Debug: check Python import
-      - name: "Debug: Test Python import"
-        shell: powershell
-        continue-on-error: true
-        run: |
-          python -c "import sys; print('PYTHONPATH:', sys.path); import CTkXYFrame; print('CTkXYFrame imported successfully')"
-
-      # Setup Python
+      # Setup Python 3.11
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # Install Java
+      # Install Java (required for language_tool_python)
       - name: Install Java
         shell: powershell
         run: |
           if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
-            Write-Host "Java not found, installing JDK 11..."
             choco install jdk11 -y
           } else {
-            Write-Host "Java is already installed."
+            Write-Host "Java already installed."
           }
 
-      # Ensure exact Python version
-      - name: Install Specific Python Version
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      # Install NLTK
-      - name: Install NLTK
-        run: |
-          pip install nltk
-          python -m nltk.downloader punkt
-
-      # Cache Python packages
-      - name: Cache Python packages
+      # Cache pip packages
+      - name: Cache pip
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Install dependencies
-      - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
-      - run: pip uninstall -y typing
-
-      # Build EXE with PyInstaller including CTkXYFrame and images (one-liner)
-      - name: Build EXE with PyInstaller
-        run: pyinstaller --name Saltify --windowed --noconfirm --onefile --paths=CTkXYFrame --collect-submodules CTkXYFrame --add-data "CTkXYFrame;CTkXYFrame" --add-data "images;images" --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --collect-data whisper GUI.py
-
-      # Copy assets and internal files
-      - shell: cmd
+      # Install dependencies (including pattern from GitHub)
+      - name: Install dependencies
         run: |
-          robocopy build_assets dist/Saltify /e /v
-          mkdir dist\Saltify\_internal\lightning_fabric
-          robocopy dist\Saltify/_internal/lightning dist\Saltify/_internal\lightning_fabric /e /v
-          mkdir dist\Saltify\_internal\pattern\text\en\
-          move dist\Saltify\en-model.slp dist\Saltify\_internal\pattern\text\en\
+          python -m pip install --upgrade pip
+          pip install git+https://github.com/clips/pattern.git
+          pip install -r requirements.txt
+          pip install pyinstaller importlib-metadata sacremoses tokenizers
 
-      # Run app for logging
+      # NLTK data (punkt)
+      - name: Install NLTK data
+        run: python -m nltk.downloader punkt
+
+      # Debug Python imports before build
+      - name: Debug - Test imports
+        shell: powershell
+        run: |
+          python -c "import pattern, customtkinter, CTkXYFrame; print('✅ All imports successful!')"
+
+      # Build EXE with PyInstaller (fixed pattern inclusion)
+      - name: Build Saltify EXE
+        run: |
+          pyinstaller --name Saltify --windowed --noconfirm --onefile ^
+            --paths=CTkXYFrame ^
+            --collect-submodules CTkXYFrame ^
+            --add-data "CTkXYFrame;CTkXYFrame" ^
+            --add-data "images;images" ^
+            --collect-data pattern ^
+            --copy-metadata torch ^
+            --copy-metadata tqdm ^
+            --copy-metadata regex ^
+            --copy-metadata sacremoses ^
+            --copy-metadata requests ^
+            --copy-metadata packaging ^
+            --copy-metadata filelock ^
+            --copy-metadata numpy ^
+            --copy-metadata tokenizers ^
+            --copy-metadata importlib_metadata ^
+            --collect-data sv_ttk ^
+            --recursive-copy-metadata "openai-whisper" ^
+            --collect-data whisper ^
+            GUI.py
+
+      # Run app for logs (headless)
       - name: Run app for logging
         run: |
           set HEADLESS=true
@@ -110,12 +110,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: SpeechTranscription_logs
+          name: Saltify_Build_Logs
           path: app.log
 
       # Upload final EXE
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: SpeechTranscription_windows
+          name: Saltify_Windows_Build
           path: dist/Saltify.exe

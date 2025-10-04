@@ -12,13 +12,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: false   
-
-      - name: Init & Update Submodules
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive
-          git submodule status
+          submodules: true
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -48,9 +42,11 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
           pip install --upgrade transformers
-          pip uninstall -y typing
+          pip uninstall -y typing || true
+          pip install git+https://github.com/Akascape/CTkXYFrame.git
 
       - name: Build EXE with PyInstaller
         run: >

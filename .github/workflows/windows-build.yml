@@ -67,9 +67,9 @@ jobs:
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
       - run: pip uninstall -y typing
 
-      # Build the EXE (single-line PyInstaller command)
+      # Build the EXE (fixed single-line PyInstaller command)
       - shell: powershell
-        run: pyinstaller --name Saltify --windowed --noconfirm --onefile --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --add-data "CTkXYFrame;CTkXYFrame" --add-data "images;images" GUI.py
+        run: pyinstaller --name Saltify --windowed --noconfirm --onefile --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --recursive-copy-metadata "CTkXYFrame" --add-data "CTkXYFrame;CTkXYFrame" --add-data "images;images" GUI.py
 
       - shell: cmd
         run: |

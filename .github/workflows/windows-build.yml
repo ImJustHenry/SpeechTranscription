@@ -63,7 +63,9 @@ jobs:
           --copy-metadata importlib_metadata
           --collect-data sv_ttk
           --recursive-copy-metadata "openai-whisper"
-          --collect-data whisper GUI.py
+          --collect-data whisper
+          --collect-all CTkXYFrame
+          GUI.py
 
       - name: Copy assets
         shell: cmd

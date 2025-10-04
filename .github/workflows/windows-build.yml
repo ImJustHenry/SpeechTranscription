@@ -17,17 +17,20 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # Checkout repo with submodules
       - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
 
+      # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
+      # Install Java
       - name: Install Java
         shell: powershell
         run: |
@@ -38,29 +41,38 @@ jobs:
             Write-Host "Java is already installed."
           }
 
+      # Install NLTK
       - name: Install NLTK
         run: |
           pip install nltk
           python -m nltk.downloader punkt
 
+      # Cache Python packages
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      - name: Install dependencies
+      # Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
           pip install --upgrade transformers
           pip uninstall -y typing || true
-          pip install git+https://github.com/Akascape/CTkXYFrame.git
 
-      - name: Verify CTkXYFrame installation
+      # Verify CTkXYFrame is present
+      - name: Verify CTkXYFrame submodule
         run: |
-          python -c "import CTkXYFrame; print('CTkXYFrame installed at:', CTkXYFrame.__file__)"
+          if exist CTkXYFrame (
+            echo "CTkXYFrame exists"
+          ) else (
+            echo "ERROR: CTkXYFrame not found"
+            exit 1
+          )
 
+      # Build EXE with PyInstaller
       - name: Build EXE with PyInstaller
         shell: cmd
         run: |
@@ -82,15 +94,17 @@ jobs:
           --hidden-import CTkXYFrame ^
           GUI.py
 
+      # Copy assets
       - name: Copy assets
         shell: cmd
         run: |
-          robocopy build_assets dist/Saltify /e /v
+          robocopy build_assets dist/Saltify /e /v 
           mkdir dist\Saltify\_internal\lightning_fabric
           robocopy dist/Saltify/_internal/lightning dist/Saltify/_internal/lightning_fabric /e /v
           mkdir dist\Saltify\_internal\pattern\text\en\
           move dist/Saltify/en-model.slp dist/Saltify/_internal/pattern/text/en\
 
+      # Upload EXE artifact
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         if: always()

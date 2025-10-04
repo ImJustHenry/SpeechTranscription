@@ -75,7 +75,7 @@ jobs:
             --collect-data sv_ttk `
             --recursive-copy-metadata "openai-whisper" `
             --collect-data whisper `
-            --paths CTkXYFrame `
+            --add-data "CTkXYFrame;CTkXYFrame" `
             GUI.py
 
 

@@ -9,7 +9,7 @@ on:
       - issue169_dependency
       - issue178_build-test-failures
       - issue-2-cicd-logging
-  workflow_call:  # <-- allows this workflow to be called by another workflow
+  workflow_call:
     inputs:
       ref:
         required: false
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
-          submodules: recursive   # <-- ensure submodules are cloned
+          submodules: recursive
           fetch-depth: 0
 
       # Add submodule to PYTHONPATH
@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: 3.11
 
-      # Install Java (needed for some dependencies)
+      # Install Java
       - name: Install Java
         shell: powershell
         run: |
@@ -70,15 +70,8 @@ jobs:
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
       - run: pip uninstall -y typing
 
-      # Build EXE with PyInstaller, including submodule path
-      - run: pyinstaller --name Saltify --windowed --noconfirm --onefile \
-            --paths=CTkXYFrame \
-            -c \
-            --copy-metadata torch --copy-metadata tqdm --copy-metadata regex \
-            --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging \
-            --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers \
-            --copy-metadata importlib_metadata --collect-data sv_ttk \
-            --recursive-copy-metadata "openai-whisper" --collect-data whisper GUI.py
+      # Build EXE with PyInstaller (one-line version)
+      - run: pyinstaller --name Saltify --windowed --noconfirm --onefile --paths=CTkXYFrame -c --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --collect-data whisper GUI.py
 
       # Copy assets and internal files
       - shell: cmd

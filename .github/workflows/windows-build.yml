@@ -18,22 +18,11 @@ jobs:
 
     steps:
       # Checkout repo with submodules
-      - name: Checkout repository (with submodules)
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
-
-      # Verify submodule exists
-      - name: Verify CTkXYFrame submodule
-        shell: powershell
-        run: |
-          if (Test-Path "CTkXYFrame") {
-              Write-Host "CTkXYFrame exists"
-          } else {
-              Write-Error "ERROR: CTkXYFrame not found"
-              exit 1
-          }
 
       # Setup Python
       - name: Setup Python
@@ -65,47 +54,58 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Install dependencies
+      # Install Python dependencies including CTkXYFrame
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
           pip install --upgrade transformers
           pip uninstall -y typing || true
+          REM # CTkXYFrame has no setup.py, so manually copy after cloning
+          git clone https://github.com/Akascape/CTkXYFrame.git _submodules/CTkXYFrame
+
+      # Verify CTkXYFrame
+      - name: Verify CTkXYFrame
+        run: |
+          python -c "import sys; sys.path.insert(0, '_submodules/CTkXYFrame'); import CTkXYFrame; print('CTkXYFrame loaded successfully')"
 
       # Build EXE with PyInstaller
       - name: Build EXE with PyInstaller
-        shell: powershell
+        shell: cmd
         run: |
-          pyinstaller --name Saltify --windowed --noconfirm --onefile -c `
-            --copy-metadata torch `
-            --copy-metadata tqdm `
-            --copy-metadata regex `
-            --copy-metadata sacremoses `
-            --copy-metadata requests `
-            --copy-metadata packaging `
-            --copy-metadata filelock `
-            --copy-metadata numpy `
-            --copy-metadata tokenizers `
-            --copy-metadata importlib_metadata `
-            --collect-data sv_ttk `
-            --recursive-copy-metadata "openai-whisper" `
-            --collect-data whisper `
-            --collect-all CTkXYFrame `
-            --hidden-import CTkXYFrame `
+          pyinstaller --name Saltify --windowed --noconfirm --onefile ^
+            --copy-metadata torch ^
+            --copy-metadata tqdm ^
+            --copy-metadata regex ^
+            --copy-metadata sacremoses ^
+            --copy-metadata requests ^
+            --copy-metadata packaging ^
+            --copy-metadata filelock ^
+            --copy-metadata numpy ^
+            --copy-metadata tokenizers ^
+            --copy-metadata importlib_metadata ^
+            --collect-data sv_ttk ^
+            --recursive-copy-metadata "openai-whisper" ^
+            --collect-data whisper ^
+            --collect-all CTkXYFrame ^
+            --hidden-import CTkXYFrame ^
             GUI.py
 
-      # Copy assets
+      # Copy extra assets safely
       - name: Copy assets
         shell: cmd
         run: |
-          robocopy build_assets dist/Saltify /e /v 
+          robocopy build_assets dist/Saltify /e /v
           mkdir dist\Saltify\_internal\lightning_fabric
-          robocopy dist\Saltify/_internal/lightning dist/Saltify/_internal/lightning_fabric /e /v
+          if exist dist\Saltify\_internal\lightning (
+            robocopy dist\Saltify\_internal\lightning dist\Saltify\_internal\lightning_fabric /e /v
+          ) else (
+            echo "_internal\lightning folder missing, skipping copy"
+          )
           mkdir dist\Saltify\_internal\pattern\text\en\
-          move dist\Saltify/en-model.slp dist\Saltify/_internal/pattern/text/en\
+          move dist\Saltify/en-model.slp dist\Saltify\_internal\pattern\text\en\
 
-      # Upload EXE artifact
+      # Upload artifact
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         if: always()

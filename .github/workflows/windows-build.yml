@@ -52,17 +52,22 @@ jobs:
           Remove-Item $jreZip
           Write-Host "JRE extracted to $env:USERPROFILE\jre_portable"
 
-      # Configure Java environment
+      # Configure JAVA_HOME and PATH
       - name: Configure Java environment
         shell: powershell
         run: |
           $javaPath = Get-ChildItem "$env:USERPROFILE\jre_portable" | Select-Object -First 1
           $javaFullPath = $javaPath.FullName
           Write-Host "Using JRE: $javaFullPath"
-          # Set JAVA_HOME for GitHub Actions
+          # Set JAVA_HOME
           "JAVA_HOME=$javaFullPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          # Add bin folder to PATH
-          "$javaFullPath\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # Prepend JRE bin to PATH
+          $binPath = "$javaFullPath\bin"
+          "$binPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      # Optional: sanity check Java
+      - name: Check Java
+        run: java -version
 
       # Cache pip packages
       - name: Cache pip

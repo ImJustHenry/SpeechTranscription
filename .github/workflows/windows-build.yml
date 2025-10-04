@@ -31,17 +31,19 @@ jobs:
       - name: Add submodule to PYTHONPATH
         run: echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/CTkXYFrame" >> $GITHUB_ENV
 
-      # Debug: check submodule exists
+      # Debug: list repository contents
       - name: Debug: List repository and submodules
+        shell: powershell
         run: |
-          echo "Current directory: $(pwd)"
-          echo "Repository contents:"
-          dir
-          echo "CTkXYFrame contents:"
-          dir CTkXYFrame
-          
-      # Debug: check Python can import CTkXYFrame
+          Write-Host "Current directory: $(pwd)"
+          Write-Host "Repository contents:"
+          Get-ChildItem
+          Write-Host "CTkXYFrame contents:"
+          Get-ChildItem CTkXYFrame
+
+      # Debug: check Python import
       - name: Debug: Test Python import
+        shell: powershell
         run: |
           python -c 'import sys; print("PYTHONPATH:", sys.path); import CTkXYFrame; print("CTkXYFrame imported successfully")'
 

@@ -8,18 +8,15 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Checkout repo including submodules
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      # Setup Python 3.11.7
       - uses: actions/setup-python@v4
         with:
-          python-version: 3.11.7
+          python-version: 3.11
 
-      # Install Java if not present
       - name: Install Java
         shell: powershell
         run: |
@@ -30,31 +27,30 @@ jobs:
             Write-Host "Java is already installed."
           }
 
-      # Install NLTK
+      - name: Install Specific Python Version
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.7
+
       - name: Install NLTK
         run: |
           pip install nltk
           python -m nltk.downloader punkt
 
-      # Cache Python packages
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Install dependencies
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
 
-      # Upgrade transformers to fix use_auth_token issues
-      - run: pip install --upgrade transformers
+      - run: pip install --upgrade transformers // For latest features and fixes
 
-      # Uninstall typing to avoid conflicts
       - run: pip uninstall -y typing
 
-      # Build with PyInstaller
       - run: >
-          pyinstaller --name Saltify --windowed --noconfirm --onefile
+          pyinstaller --name Saltify --windowed --noconfirm --onefile -c
           --copy-metadata torch
           --copy-metadata tqdm
           --copy-metadata regex
@@ -69,7 +65,6 @@ jobs:
           --recursive-copy-metadata "openai-whisper"
           --collect-data whisper GUI.py
 
-      # Copy additional assets
       - shell: cmd
         run: |
           robocopy build_assets dist/Saltify /e /v 
@@ -78,7 +73,6 @@ jobs:
           mkdir dist\Saltify\_internal\pattern\text\en\
           move dist/Saltify/en-model.slp dist/Saltify/_internal/pattern/text/en\
 
-      # Upload built exe
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -8,12 +8,14 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
@@ -27,11 +29,6 @@ jobs:
             Write-Host "Java is already installed."
           }
 
-      - name: Install Specific Python Version
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11.7
-
       - name: Install NLTK
         run: |
           pip install nltk
@@ -43,13 +40,14 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
+          pip install --upgrade transformers
+          pip uninstall -y typing
 
-      - run: pip install --upgrade transformers // For latest features and fixes
-
-      - run: pip uninstall -y typing
-
-      - run: >
+      - name: Build EXE with PyInstaller
+        run: >
           pyinstaller --name Saltify --windowed --noconfirm --onefile -c
           --copy-metadata torch
           --copy-metadata tqdm
@@ -65,7 +63,8 @@ jobs:
           --recursive-copy-metadata "openai-whisper"
           --collect-data whisper GUI.py
 
-      - shell: cmd
+      - name: Copy assets
+        shell: cmd
         run: |
           robocopy build_assets dist/Saltify /e /v 
           mkdir dist\Saltify\_internal\lightning_fabric
@@ -73,7 +72,8 @@ jobs:
           mkdir dist\Saltify\_internal\pattern\text\en\
           move dist/Saltify/en-model.slp dist/Saltify/_internal/pattern/text/en\
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: SpeechTranscription_windows

@@ -1,18 +1,24 @@
 name: Build Saltify (Windows)
 
 on:
-  workflow_dispatch:   # Only runs when manually triggered from GitHub UI
+  workflow_dispatch:
 
 jobs:
   build-windows:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout with submodules
+      - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 0
+          submodules: false   
+
+      - name: Init & Update Submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git submodule status
 
       - name: Setup Python
         uses: actions/setup-python@v4

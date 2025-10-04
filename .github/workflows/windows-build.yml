@@ -32,7 +32,7 @@ jobs:
         run: echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/CTkXYFrame" >> $GITHUB_ENV
 
       # Debug: list repository contents
-      - name: Debug: List repository and submodules
+      - name: "Debug: List repository and submodules"
         shell: powershell
         run: |
           Write-Host "Current directory: $(pwd)"
@@ -42,7 +42,7 @@ jobs:
           Get-ChildItem CTkXYFrame
 
       # Debug: check Python import
-      - name: Debug: Test Python import
+      - name: "Debug: Test Python import"
         shell: powershell
         run: |
           python -c 'import sys; print("PYTHONPATH:", sys.path); import CTkXYFrame; print("CTkXYFrame imported successfully")'

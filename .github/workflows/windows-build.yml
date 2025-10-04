@@ -25,6 +25,15 @@ jobs:
       - name: Update Git submodules
         run: git submodule update --init --recursive
 
+      # Debug: Verify CTkXYFrame submodule
+      - name: Verify CTkXYFrame submodule
+        shell: bash
+        run: |
+          echo "=== Checking CTkXYFrame submodule ==="
+          git submodule status
+          echo "=== Directory structure ==="
+          ls -R CTkXYFrame || echo "CTkXYFrame directory not found!"
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -77,7 +86,6 @@ jobs:
             --collect-data whisper `
             --add-data "CTkXYFrame;CTkXYFrame" `
             GUI.py
-
 
       - shell: cmd
         run: |

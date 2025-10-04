@@ -1,7 +1,6 @@
 name: Build Saltify (Windows)
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
@@ -11,6 +10,7 @@ on:
       - issue178_build-test-failures
       - issue-2-cicd-logging
       - feature/githubRelease
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -55,18 +55,14 @@ jobs:
           pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
           pip install --upgrade transformers
           pip uninstall -y typing || true
+          pip install git+https://github.com/Akascape/CTkXYFrame.git
 
-      - name: Verify CTkXYFrame submodule
-        shell: cmd
+      - name: Verify CTkXYFrame installation
         run: |
-          if exist CTkXYFrame (
-            echo CTkXYFrame submodule found.
-            dir CTkXYFrame
-          ) else (
-            echo ERROR: CTkXYFrame submodule missing! && exit 1
-          )
+          python -c "import CTkXYFrame; print('CTkXYFrame installed at:', CTkXYFrame.__file__)"
 
       - name: Build EXE with PyInstaller
+        shell: cmd
         run: |
           pyinstaller --name Saltify --windowed --noconfirm --onefile -c ^
           --copy-metadata torch ^
@@ -89,7 +85,7 @@ jobs:
       - name: Copy assets
         shell: cmd
         run: |
-          robocopy build_assets dist/Saltify /e /v 
+          robocopy build_assets dist/Saltify /e /v
           mkdir dist\Saltify\_internal\lightning_fabric
           robocopy dist/Saltify/_internal/lightning dist/Saltify/_internal/lightning_fabric /e /v
           mkdir dist\Saltify\_internal\pattern\text\en\

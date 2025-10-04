@@ -13,7 +13,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # Checkout repository with submodules
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # <-- ensures CTkXYFrame is pulled
+          fetch-depth: 0
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -46,18 +51,37 @@ jobs:
 
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
       - run: pip uninstall -y typing
-      - run: pyinstaller --name Saltify --windowed --noconfirm --onefile -c --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --collect-data whisper GUI.py
+
+      - name: Add CTkXYFrame to PYTHONPATH
+        shell: bash
+        run: |
+          echo "PYTHONPATH=$PYTHONPATH:$(pwd)/CTkXYFrame" >> $GITHUB_ENV
+
+      - run: pyinstaller --name Saltify --windowed --noconfirm --onefile -c \
+            --copy-metadata torch \
+            --copy-metadata tqdm \
+            --copy-metadata regex \
+            --copy-metadata sacremoses \
+            --copy-metadata requests \
+            --copy-metadata packaging \
+            --copy-metadata filelock \
+            --copy-metadata numpy \
+            --copy-metadata tokenizers \
+            --copy-metadata importlib_metadata \
+            --collect-data sv_ttk \
+            --recursive-copy-metadata "openai-whisper" \
+            --collect-data whisper \
+            --paths CTkXYFrame \
+            GUI.py
 
       - shell: cmd 
         run: |
           robocopy build_assets dist/Saltify /e /v 
           mkdir dist\Saltify\_internal\lightning_fabric
-          robocopy dist/Saltify/_internal/lightning dist/Saltify/_internal/lightning_fabric /e /v
+          robocopy dist\Saltify/_internal/lightning dist\Saltify/_internal/lightning_fabric /e /v
           mkdir dist\Saltify\_internal\pattern\text\en\
           move dist\Saltify\en-model.slp dist\Saltify\_internal\pattern\text\en\
       
-
-       # Added app.log to see crash logs in github action - CICD Internal Dev
       - name: Run app for logging
         run: |
           set HEADLESS=true

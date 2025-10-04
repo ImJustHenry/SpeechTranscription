@@ -8,49 +8,38 @@ permissions:
   contents: write
   packages: read
   actions: read
-
 jobs:
   call-macos-build:
     uses: ./.github/workflows/macos-build.yml
-    with:
-      ref: ${{ github.ref }}
-
   call-windows-build:
     uses: ./.github/workflows/windows-build.yml
-    with:
-      ref: ${{ github.ref }}
-
   release:
     needs: [call-macos-build, call-windows-build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Create artifacts directory
         run: mkdir -p artifacts/macos artifacts/windows
-
       - name: Download macOS build artifacts
         uses: actions/download-artifact@v4
         with:
           name: SpeechTranscription_macos
           path: artifacts/macos
-
       - name: Download Windows build artifacts
         uses: actions/download-artifact@v4
         with:
           name: SpeechTranscription_windows
           path: artifacts/windows
-
       - name: List directory structure
         run: |
           echo "Full directory structure:"
           find . -type f -not -path "./.git/*"
+          
           echo "Contents of artifacts directory:"
           ls -la artifacts/
           ls -la artifacts/macos || echo "No macOS artifacts"
           ls -la artifacts/windows || echo "No Windows artifacts"
-
       - name: Create project ZIP
         run: |
           echo "Build number: ${{ github.run_number }}" >> release_notes.md
@@ -75,7 +64,6 @@ jobs:
           
           echo "- Saltify_macos.zip: macOS executable" >> release_notes.md
           echo "- Saltify_windows.zip: Windows executable" >> release_notes.md
-
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -87,8 +75,7 @@ jobs:
           body_path: ./release_notes.md
           draft: false
           prerelease: false
-
-      - name: Upload macOS Release Asset
+      - name: Upload Release Assets
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,8 +84,7 @@ jobs:
           asset_path: artifacts/Saltify_macos.zip
           asset_name: Saltify_macos.zip
           asset_content_type: application/zip
-
-      - name: Upload Windows Release Asset
+      - name: Upload Release Assets
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

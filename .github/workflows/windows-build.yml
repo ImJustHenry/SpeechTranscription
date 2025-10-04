@@ -83,8 +83,9 @@ jobs:
             --copy-metadata importlib_metadata `
             --collect-data sv_ttk `
             --recursive-copy-metadata "openai-whisper" `
-            --collect-data whisper `
+            --recursive-copy-metadata "CTkXYFrame" `   
             --add-data "CTkXYFrame;CTkXYFrame" `
+            --add-data "images;images" `             
             GUI.py
 
       - shell: cmd

@@ -44,8 +44,9 @@ jobs:
       # Debug: check Python import
       - name: "Debug: Test Python import"
         shell: powershell
+        continue-on-error: true
         run: |
-          python -c 'import sys; print("PYTHONPATH:", sys.path); import CTkXYFrame; print("CTkXYFrame imported successfully")'
+          python -c "import sys; print('PYTHONPATH:', sys.path); import CTkXYFrame; print('CTkXYFrame imported successfully')"
 
       # Setup Python
       - uses: actions/setup-python@v4
@@ -86,8 +87,8 @@ jobs:
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
       - run: pip uninstall -y typing
 
-      # Build EXE with PyInstaller (one-line version)
-      - run: pyinstaller --name Saltify --windowed --noconfirm --onefile --paths=CTkXYFrame -c --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --collect-data whisper GUI.py
+      # Build EXE with PyInstaller including submodule
+      - run: pyinstaller --name Saltify --windowed --noconfirm --onefile --paths=CTkXYFrame --collect-submodules CTkXYFrame -c --copy-metadata torch --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata numpy --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --recursive-copy-metadata "openai-whisper" --collect-data whisper GUI.py
 
       # Copy assets and internal files
       - shell: cmd

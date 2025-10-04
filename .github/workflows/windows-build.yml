@@ -17,20 +17,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Checkout repo with submodules
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: true
 
-      # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # Install Java
       - name: Install Java
         shell: powershell
         run: |
@@ -41,35 +38,32 @@ jobs:
             Write-Host "Java is already installed."
           }
 
-      # Install NLTK
       - name: Install NLTK
         run: |
           pip install nltk
           python -m nltk.downloader punkt
 
-      # Cache Python packages
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Install Python dependencies including CTkXYFrame
+      # Install dependencies (CMD shell)
       - name: Install dependencies
+        shell: cmd
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
           pip install --upgrade transformers
           pip uninstall -y typing || true
-          REM # CTkXYFrame has no setup.py, so manually copy after cloning
-          git clone https://github.com/Akascape/CTkXYFrame.git _submodules/CTkXYFrame
+          :: CTkXYFrame has no setup.py, so manually copy after cloning
+          git clone https://github.com/Akascape/CTkXYFrame.git _submodules\CTkXYFrame
 
-      # Verify CTkXYFrame
       - name: Verify CTkXYFrame
         run: |
           python -c "import sys; sys.path.insert(0, '_submodules/CTkXYFrame'); import CTkXYFrame; print('CTkXYFrame loaded successfully')"
 
-      # Build EXE with PyInstaller
       - name: Build EXE with PyInstaller
         shell: cmd
         run: |
@@ -91,7 +85,6 @@ jobs:
             --hidden-import CTkXYFrame ^
             GUI.py
 
-      # Copy extra assets safely
       - name: Copy assets
         shell: cmd
         run: |
@@ -103,9 +96,8 @@ jobs:
             echo "_internal\lightning folder missing, skipping copy"
           )
           mkdir dist\Saltify\_internal\pattern\text\en\
-          move dist\Saltify/en-model.slp dist\Saltify\_internal\pattern\text\en\
+          if exist dist\Saltify\en-model.slp move dist\Saltify\en-model.slp dist\Saltify\_internal\pattern\text\en\
 
-      # Upload artifact
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         if: always()

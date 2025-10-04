@@ -24,6 +24,17 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      # Verify submodule exists
+      - name: Verify CTkXYFrame submodule
+        shell: powershell
+        run: |
+          if (Test-Path "CTkXYFrame") {
+              Write-Host "CTkXYFrame exists"
+          } else {
+              Write-Error "ERROR: CTkXYFrame not found"
+              exit 1
+          }
+
       # Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -55,44 +66,34 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
       # Install dependencies
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
           pip install --upgrade transformers
           pip uninstall -y typing || true
 
-      # Verify CTkXYFrame is present
-      - name: Verify CTkXYFrame submodule
-        run: |
-          if exist CTkXYFrame (
-            echo "CTkXYFrame exists"
-          ) else (
-            echo "ERROR: CTkXYFrame not found"
-            exit 1
-          )
-
       # Build EXE with PyInstaller
       - name: Build EXE with PyInstaller
-        shell: cmd
+        shell: powershell
         run: |
-          pyinstaller --name Saltify --windowed --noconfirm --onefile -c ^
-          --copy-metadata torch ^
-          --copy-metadata tqdm ^
-          --copy-metadata regex ^
-          --copy-metadata sacremoses ^
-          --copy-metadata requests ^
-          --copy-metadata packaging ^
-          --copy-metadata filelock ^
-          --copy-metadata numpy ^
-          --copy-metadata tokenizers ^
-          --copy-metadata importlib_metadata ^
-          --collect-data sv_ttk ^
-          --recursive-copy-metadata "openai-whisper" ^
-          --collect-data whisper ^
-          --collect-all CTkXYFrame ^
-          --hidden-import CTkXYFrame ^
-          GUI.py
+          pyinstaller --name Saltify --windowed --noconfirm --onefile -c `
+            --copy-metadata torch `
+            --copy-metadata tqdm `
+            --copy-metadata regex `
+            --copy-metadata sacremoses `
+            --copy-metadata requests `
+            --copy-metadata packaging `
+            --copy-metadata filelock `
+            --copy-metadata numpy `
+            --copy-metadata tokenizers `
+            --copy-metadata importlib_metadata `
+            --collect-data sv_ttk `
+            --recursive-copy-metadata "openai-whisper" `
+            --collect-data whisper `
+            --collect-all CTkXYFrame `
+            --hidden-import CTkXYFrame `
+            GUI.py
 
       # Copy assets
       - name: Copy assets
@@ -100,9 +101,9 @@ jobs:
         run: |
           robocopy build_assets dist/Saltify /e /v 
           mkdir dist\Saltify\_internal\lightning_fabric
-          robocopy dist/Saltify/_internal/lightning dist/Saltify/_internal/lightning_fabric /e /v
+          robocopy dist\Saltify/_internal/lightning dist/Saltify/_internal/lightning_fabric /e /v
           mkdir dist\Saltify\_internal\pattern\text\en\
-          move dist/Saltify/en-model.slp dist/Saltify/_internal/pattern/text/en\
+          move dist\Saltify/en-model.slp dist\Saltify/_internal/pattern/text/en\
 
       # Upload EXE artifact
       - name: Upload EXE artifact

@@ -1,23 +1,33 @@
 from nltk import sent_tokenize, word_tokenize, pos_tag, WordNetLemmatizer
+import sys
 import os
 import language_tool_python
 from pattern.text.en import conjugate
 
 wnl = WordNetLemmatizer()
 
-# Try to use the pre-downloaded LanguageTool JAR (for CI workflow)
-lt_jar_path = os.getenv("LANGUAGE_TOOL_PATH")
+# Determine base path depending on whether running as PyInstaller exe or normal script
+if getattr(sys, 'frozen', False):
+    # Running as PyInstaller bundle
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.dirname(os.path.abspath(__file__))
 
+# Path to bundled LanguageTool JAR
+lt_jar_path = os.path.join(base_path, "LanguageTool", "languagetool-server.jar")
+
+# Initialize LanguageTool
 try:
-    if lt_jar_path and os.path.exists(lt_jar_path):
-        print(f"[INFO] Using preinstalled LanguageTool at {lt_jar_path}")
+    if os.path.exists(lt_jar_path):
+        print(f"[INFO] Using bundled LanguageTool at {lt_jar_path}")
         tool = language_tool_python.LanguageTool("en-US", path=lt_jar_path)
     else:
-        print("[WARN] LANGUAGE_TOOL_PATH not set. Falling back to default (may trigger download).")
+        print("[WARN] LanguageTool JAR not found. Falling back to default (may trigger download).")
         tool = language_tool_python.LanguageTool("en-US")
 except Exception as e:
     print(f"[ERROR] Failed to initialize LanguageTool: {e}")
-    tool = None  # prevent crash if LanguageTool isn't available
+    tool = None  # Prevent crash if LanguageTool isn't available
+
 
 def isToBeVerb(verb):
     toBeVerbs = ["am", "is", "are", "will be", "was", "were", "been",

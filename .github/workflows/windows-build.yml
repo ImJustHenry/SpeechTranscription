@@ -99,7 +99,7 @@ jobs:
         shell: cmd
         run: |
           for /f "delims=" %%i in ('python -c "import os, pyannote.audio; print(os.path.join(os.path.dirname(pyannote.audio.__file__), 'telemetry', 'config.yaml'))"') do set CFG=%%i
-          pyinstaller --name Saltify --windowed --noconfirm --onefile ^
+          pyinstaller --name Saltify --console --noconfirm --onefile ^
             --paths=CTkXYFrame ^
             --collect-submodules CTkXYFrame ^
             --add-data "CTkXYFrame;CTkXYFrame" ^

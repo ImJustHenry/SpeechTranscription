@@ -54,6 +54,23 @@ jobs:
       - name: Check Java
         run: java -version
 
+      # Download LanguageTool and configure environment
+      - name: Download LanguageTool
+        shell: powershell
+        run: |
+          $ltUrl = "https://languagetool.org/download/LanguageTool-stable.zip"
+          $ltZip = "$env:TEMP\LanguageTool.zip"
+          Invoke-WebRequest -Uri $ltUrl -OutFile $ltZip
+          Expand-Archive -Path $ltZip -DestinationPath "$env:USERPROFILE\LanguageTool" -Force
+          Remove-Item $ltZip
+
+      - name: Configure LanguageTool path
+        shell: powershell
+        run: |
+          $ltFolder = Get-ChildItem "$env:USERPROFILE\LanguageTool" | Select-Object -First 1
+          $ltJar = Join-Path $ltFolder.FullName "languagetool-server.jar"
+          Write-Host "LANGUAGE_TOOL_PATH=$ltJar" >> $env:GITHUB_ENV
+
       # Cache pip packages
       - uses: actions/cache@v3
         with:
@@ -67,8 +84,6 @@ jobs:
           pip install git+https://github.com/clips/pattern.git
           pip install -r requirements.txt
           pip install pyinstaller importlib-metadata sacremoses tokenizers
-
-          # Uninstall obsolete 'typing' package to avoid PyInstaller conflicts
           pip uninstall -y typing || echo "No old typing package found"
 
       # Install NLTK data (punkt tokenizer)

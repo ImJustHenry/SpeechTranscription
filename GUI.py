@@ -1,6 +1,6 @@
 import os
 import sys
-import logging
+
 
 import CTkXYFrame
 
@@ -10,19 +10,6 @@ from components.audio_menu import audioMenu, plotAudio
 from components.utils import createButton, lockItem, unlockItem
 from components.error_handler import global_error_handler, show_error_popup
 from components.constants import WIDTH, HEIGHT, SETTINGS_FILE
-
-# Logging setup
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("app.log", mode="w")
-    ]
-)
-
-logger = logging.getLogger("SpeechTranscription")
-logger.info("Starting SpeechTranscription app")
 
 class mainGUI(CTk):
     @global_error_handler
@@ -146,13 +133,4 @@ class mainGUI(CTk):
         self.mainloop()
 
 if __name__ == "__main__":
-    try:
-        headless = os.environ.get("HEADLESS", "false").lower() == "true"
-        if headless:
-            logger.info("Running in headless mode.")
-            mainGUI()
-        else:
-            mainGUI()
-    except Exception as e:
-        logger.exception("Error running GUI.")
-        raise
+  mainGUI()

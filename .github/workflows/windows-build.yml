@@ -77,7 +77,7 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Install dependencies
+      # Install dependencies and ensure 'typing' is removed
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -85,6 +85,19 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller importlib-metadata sacremoses tokenizers
           pip uninstall -y typing || echo "No old typing package found"
+
+      # Install FFmpeg for TorchCodec / Pyannote.audio
+      - name: Install FFmpeg
+        shell: powershell
+        run: |
+          choco install ffmpeg -y
+          echo "FFMPEG installed successfully."
+          ffmpeg -version
+
+      # Reinstall TorchCodec to ensure compatibility
+      - name: Reinstall TorchCodec
+        run: pip install --upgrade torch torchcodec
+
 
       # Install NLTK data (punkt tokenizer)
       - name: Install NLTK data

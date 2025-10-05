@@ -20,58 +20,39 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # Checkout repository and submodules
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
           submodules: recursive
           fetch-depth: 0
 
-      # Debug: verify repo structure
-      - name: Debug - List repo and submodules
+      - name: Debug - List repo
         shell: powershell
         run: |
           Write-Host "Current directory: $(pwd)"
           Get-ChildItem
-          Write-Host "`nSubmodule (CTkXYFrame) contents:"
           Get-ChildItem CTkXYFrame
 
-      # Setup Python 3.11
+      # Setup Python
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # Download and extract portable JRE
-      - name: Download portable JRE
+      # Install Java (Chocolatey)
+      - name: Install Java
         shell: powershell
         run: |
-          $jreUrl = "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u462-b08/OpenJDK8U-jre_x64_windows_hotspot_8u462b08.zip"
-          $jreZip = "$env:TEMP\jre.zip"
-          Invoke-WebRequest -Uri $jreUrl -OutFile $jreZip
-          Expand-Archive -Path $jreZip -DestinationPath "$env:USERPROFILE\jre_portable" -Force
-          Remove-Item $jreZip
-          Write-Host "JRE extracted to $env:USERPROFILE\jre_portable"
+          if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
+              choco install jdk11 -y
+          } else {
+              Write-Host "Java already installed."
+          }
 
-      # Configure JAVA_HOME and PATH
-      - name: Configure Java environment
-        shell: powershell
-        run: |
-          $javaPath = Get-ChildItem "$env:USERPROFILE\jre_portable" | Select-Object -First 1
-          $javaFullPath = $javaPath.FullName
-          Write-Host "Using JRE: $javaFullPath"
-          # Set JAVA_HOME
-          "JAVA_HOME=$javaFullPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          # Prepend JRE bin to PATH
-          $binPath = "$javaFullPath\bin"
-          "$binPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      # Optional: sanity check Java
       - name: Check Java
         run: java -version
 
-      # Cache pip packages
-      - name: Cache pip
-        uses: actions/cache@v3
+      # Cache pip
+      - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -83,17 +64,11 @@ jobs:
           pip install git+https://github.com/clips/pattern.git
           pip install -r requirements.txt
           pip install pyinstaller importlib-metadata sacremoses tokenizers
-          pip uninstall -y typing || echo "No old typing package found"
 
-      # NLTK data (punkt)
       - name: Install NLTK data
         run: python -m nltk.downloader punkt
 
-      # Debug: Verify imports
-      - name: Debug - Test imports
-        run: python -c "import pattern, customtkinter, CTkXYFrame; print('All imports successful!')"
-
-      # Build EXE with PyInstaller
+      # Build EXE
       - name: Build Saltify EXE
         shell: cmd
         run: |
@@ -103,23 +78,10 @@ jobs:
             --add-data "CTkXYFrame;CTkXYFrame" ^
             --add-data "images;images" ^
             --collect-data pattern ^
-            --copy-metadata torch ^
-            --copy-metadata tqdm ^
-            --copy-metadata regex ^
-            --copy-metadata sacremoses ^
-            --copy-metadata requests ^
-            --copy-metadata packaging ^
-            --copy-metadata filelock ^
-            --copy-metadata numpy ^
-            --copy-metadata tokenizers ^
-            --copy-metadata importlib_metadata ^
-            --collect-data sv_ttk ^
-            --recursive-copy-metadata "openai-whisper" ^
-            --collect-data whisper ^
             GUI.py
 
-      # Run app for logging (headless mode)
-      - name: Run app for logging
+      # Run app headless for logging
+      - name: Run app headless
         shell: cmd
         run: |
           set HEADLESS=true
@@ -132,7 +94,7 @@ jobs:
           name: SpeechTranscription_windows_Logs
           path: app.log
 
-      # Upload final EXE
+      # Upload EXE
       - uses: actions/upload-artifact@v4
         if: always()
         with:

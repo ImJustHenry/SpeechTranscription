@@ -94,15 +94,17 @@ jobs:
       - name: Debug - Test imports
         run: python -c "import pattern, customtkinter, CTkXYFrame; print('All imports successful!')"
 
-      # Build EXE with PyInstaller
+      # Build EXE with PyInstaller (includes pyannote.audio fix)
       - name: Build Saltify EXE
         shell: cmd
         run: |
+          for /f "delims=" %%i in ('python -c "import os, pyannote.audio; print(os.path.join(os.path.dirname(pyannote.audio.__file__), 'telemetry', 'config.yaml'))"') do set CFG=%%i
           pyinstaller --name Saltify --windowed --noconfirm --onefile ^
             --paths=CTkXYFrame ^
             --collect-submodules CTkXYFrame ^
             --add-data "CTkXYFrame;CTkXYFrame" ^
             --add-data "images;images" ^
+            --add-data "%CFG%;pyannote/audio/telemetry" ^
             --collect-data pattern ^
             GUI.py
 

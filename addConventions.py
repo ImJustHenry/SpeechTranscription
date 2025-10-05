@@ -1,9 +1,23 @@
 from nltk import sent_tokenize, word_tokenize, pos_tag, WordNetLemmatizer
+import os
 import language_tool_python
 from pattern.text.en import conjugate
 
 wnl = WordNetLemmatizer()
-tool = language_tool_python.LanguageTool("en-US")
+
+# Try to use the pre-downloaded LanguageTool JAR (for CI workflow)
+lt_jar_path = os.getenv("LANGUAGE_TOOL_PATH")
+
+try:
+    if lt_jar_path and os.path.exists(lt_jar_path):
+        print(f"[INFO] Using preinstalled LanguageTool at {lt_jar_path}")
+        tool = language_tool_python.LanguageTool("en-US", path=lt_jar_path)
+    else:
+        print("[WARN] LANGUAGE_TOOL_PATH not set. Falling back to default (may trigger download).")
+        tool = language_tool_python.LanguageTool("en-US")
+except Exception as e:
+    print(f"[ERROR] Failed to initialize LanguageTool: {e}")
+    tool = None  # prevent crash if LanguageTool isn't available
 
 def isToBeVerb(verb):
     toBeVerbs = ["am", "is", "are", "will be", "was", "were", "been",

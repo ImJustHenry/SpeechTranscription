@@ -24,20 +24,6 @@ logging.basicConfig(
 logger = logging.getLogger("SpeechTranscription")
 logger.info("Starting SpeechTranscription app")
 
-# Setup language_tool_python safely
-try:
-    import language_tool_python
-    java_home = os.environ.get("JAVA_HOME", "")
-    java_bin = os.path.join(java_home, "bin", "java.exe") if java_home else "java"
-    tool = language_tool_python.LanguageTool(
-        'en-US',
-        progress_bar=False,
-        config={'java_bin': java_bin}
-    )
-except Exception as e:
-    logger.warning(f"LanguageTool not initialized: {e}")
-    tool = None
-
 class mainGUI(CTk):
     @global_error_handler
     def new_session(self):

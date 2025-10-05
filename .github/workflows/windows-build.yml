@@ -20,12 +20,14 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # Checkout repository and submodules
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
           submodules: recursive
           fetch-depth: 0
 
+      # Debug: verify repo structure
       - name: Debug - List repo
         shell: powershell
         run: |
@@ -33,12 +35,12 @@ jobs:
           Get-ChildItem
           Get-ChildItem CTkXYFrame
 
-      # Setup Python
+      # Setup Python 3.11
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # Install Java (Chocolatey)
+      # Install Java using Chocolatey (required for language-tool-python)
       - name: Install Java
         shell: powershell
         run: |
@@ -48,16 +50,17 @@ jobs:
               Write-Host "Java already installed."
           }
 
+      # Verify Java installation
       - name: Check Java
         run: java -version
 
-      # Cache pip
+      # Cache pip packages
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
-      # Install dependencies
+      # Install dependencies and ensure 'typing' is removed
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -65,10 +68,18 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller importlib-metadata sacremoses tokenizers
 
+          # Uninstall obsolete 'typing' package to avoid PyInstaller conflicts
+          pip uninstall -y typing || echo "No old typing package found"
+
+      # Install NLTK data (punkt tokenizer)
       - name: Install NLTK data
         run: python -m nltk.downloader punkt
 
-      # Build EXE
+      # Debug: verify imports
+      - name: Debug - Test imports
+        run: python -c "import pattern, customtkinter, CTkXYFrame; print('All imports successful!')"
+
+      # Build EXE with PyInstaller
       - name: Build Saltify EXE
         shell: cmd
         run: |
@@ -80,7 +91,7 @@ jobs:
             --collect-data pattern ^
             GUI.py
 
-      # Run app headless for logging
+      # Run the app in headless mode for logging
       - name: Run app headless
         shell: cmd
         run: |
@@ -94,7 +105,7 @@ jobs:
           name: SpeechTranscription_windows_Logs
           path: app.log
 
-      # Upload EXE
+      # Upload final EXE
       - uses: actions/upload-artifact@v4
         if: always()
         with:

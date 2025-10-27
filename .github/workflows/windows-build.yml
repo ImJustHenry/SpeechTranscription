@@ -16,7 +16,6 @@ jobs:
   build-windows:
     runs-on: windows-latest
     env:
-      HEADLESS: "true"
       TQDM_DISABLE: "1"
 
     steps:

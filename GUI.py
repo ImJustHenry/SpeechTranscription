@@ -1,5 +1,6 @@
 # Adding Logging - CICD Internal Dev 
 import logging
+import tempfile
 
 # main.py
 from customtkinter import *
@@ -20,13 +21,11 @@ if sys.stdout is None:
 if sys.stderr is None:
     sys.stderr = io.StringIO()
 
+log_path = os.path.join(tempfile.gettempdir(), "app.log")
+
 logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),  # logs to console
-        logging.FileHandler("app.log", mode="w")  # logs to a file
-    ]
+    level=logging.INFO,
+    handlers=[logging.FileHandler(log_path, mode="w")]
 )
 
 logger = logging.getLogger("SpeechTranscription")

@@ -84,13 +84,13 @@ jobs:
       - name: Run GUI headless for log
         run: |
           set HEADLESS=true
-          python GUI.py > app.log 2>&1 || true
+          python GUI.py > "%RUNNER_TEMP%/app.log" 2>&1 || true
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: SpeechTranscription_windows_logs
-          path: app.log
+          path: ${{ runner.temp }}/app.log
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -10,6 +10,7 @@ on:
       - issue169_dependency
       - issue178_build-test-failures
       - issue-2-cicd-logging
+      - feature/fixingGrammarCheck
 
 jobs:
   build-windows:
@@ -85,15 +86,15 @@ jobs:
           GUI.py
 
       - name: Run GUI headless for log
-        shell: cmd
         run: |
-          python GUI.py > "${{ runner.temp }}\app.log" 2>&1 || true
+          set HEADLESS=true
+          python GUI.py > app.log 2>&1 || true
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: SpeechTranscription_windows_logs
-          path: ${{ runner.temp }}/app.log
+          path: app.log
 
       - uses: actions/upload-artifact@v4
         if: always()

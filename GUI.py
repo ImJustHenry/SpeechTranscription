@@ -11,8 +11,15 @@ from components.error_handler import global_error_handler, show_error_popup
 from components.constants import WIDTH, HEIGHT, SETTINGS_FILE
 import os
 import sys
+import io
 
-# Logging setup - CICD Internal Dev 
+# Logging setup & give tqdm something safe to write to even if no console exists- CICD Internal Dev 
+
+if sys.stdout is None:
+    sys.stdout = io.StringIO()
+if sys.stderr is None:
+    sys.stderr = io.StringIO()
+
 logging.basicConfig(
     level=logging.INFO,  
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

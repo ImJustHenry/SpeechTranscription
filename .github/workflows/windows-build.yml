@@ -82,6 +82,7 @@ jobs:
           GUI.py
 
       - name: Run GUI headless for log
+        shell: cmd
         run: |
           set HEADLESS=true
           python GUI.py > "%RUNNER_TEMP%/app.log" 2>&1 || true

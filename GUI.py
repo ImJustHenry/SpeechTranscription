@@ -14,12 +14,7 @@ import os
 import sys
 import io
 
-# Logging setup & give tqdm something safe to write to even if no console exists- CICD Internal Dev 
-
-if sys.stdout is None:
-    sys.stdout = io.StringIO()
-if sys.stderr is None:
-    sys.stderr = io.StringIO()
+# Logging setup - CICD Internal Dev 
 
 log_path = os.path.join(tempfile.gettempdir(), "app.log")
 
